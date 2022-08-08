@@ -5,33 +5,32 @@ from PySide2.QtUiTools import QUiLoader
 import os
 
 
-class StrategyTesterUI(QtWidgets.QWidget):
+class StrategyTesterUI(QtCore.QObject):
 
     def __init__(self, controller):
         super(StrategyTesterUI, self).__init__()
 
         self.controller = controller
-
+        self.view = None
         # It does not finish by a "/"
-        loader = QUiLoader()
+        loader = QUiLoader(self)
         self.current_dir_path = os.path.dirname(os.path.realpath(__file__))
         path = os.fspath(self.current_dir_path + "/ui/strategyTester.ui")
         ui_file = QFile(path)
         ui_file.open(QFile.ReadOnly)
-        loader.load(ui_file, self)
+        self.view = view = loader.load(ui_file)
         ui_file.close()
 
-
-        self.runBacktestPB = self.findChild(QtWidgets.QPushButton, "runBacktestPB")
+        self.runBacktestPB = view.findChild(QtWidgets.QPushButton, "runBacktestPB")
         self.runBacktestPB.clicked.connect(self.run)
 
-        self.runningStratPB = self.findChild(QtWidgets.QProgressBar, "runningStratPB")
-        self.startingCashLE = self.findChild(QtWidgets.QLineEdit, "startingCashLE")
+        self.runningStratPB = view.findChild(QtWidgets.QProgressBar, "runningStratPB")
+        self.startingCashLE = view.findChild(QtWidgets.QLineEdit, "startingCashLE")
 
-        self.strategyNameCB = self.findChild(QtWidgets.QComboBox, "strategyNameCB")
+        self.strategyNameCB = view.findChild(QtWidgets.QComboBox, "strategyNameCB")
         self.strategyNameCB.currentIndexChanged.connect(self.strategyNameActivated)
 
-        self.runLabel = self.findChild(QtWidgets.QLabel, "runLabel")
+        self.runLabel = view.findChild(QtWidgets.QLabel, "runLabel")
 
         self.runBacktestPB.setEnabled(False)
 
@@ -54,3 +53,6 @@ class StrategyTesterUI(QtWidgets.QWidget):
     def strategyNameActivated(self):
         stratBaseName = self.strategyNameCB.currentText()
         self.controller.addStrategy(stratBaseName)
+
+    def getView(self):
+        return self.view
