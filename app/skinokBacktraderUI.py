@@ -26,7 +26,6 @@ from CerebroEnhanced import *
 
 import sys, os
 
-from app.observers import stockObserver
 from backtrader.order import BuyOrder, SellOrder
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/observers')
@@ -39,9 +38,10 @@ import pandas as pd
 import userInterface as Ui
 
 from wallet import Wallet
-from observers.stockObserver import StockObserver
 
-class SkinokBacktraderUI:
+class BacktraderUI:
+    interface = None
+    wallet = None
 
     def __init__(self):
         # init variables
@@ -94,6 +94,7 @@ class SkinokBacktraderUI:
         '''
 
         # Add an observer to watch the strat running and update the progress bar values
+        from observers.stockObserver import StockObserver
         self.cerebro.addobserver(StockObserver)
 
         # Add data to cerebro

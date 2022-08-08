@@ -487,7 +487,7 @@ class UserInterface:
     # Get strategy running progress bar
     #########
     def getProgressBar(self):
-        return self.strategyTesterUI.getview().runningStratPB
+        return self.strategyTesterUI.runningStratPB
 
     #########
     # Draw chart
@@ -698,14 +698,14 @@ class UserInterface:
         # Show indicator parameter dialog
 
         paramDialog = indicatorParametersUI.IndicatorParametersUI()
-        paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+        paramDialog.getView().setWindowFlags(QtCore.Qt.CustomizeWindowHint)
         paramDialog.setTitle("EMA Indicator parameters")
         paramDialog.addParameter("EMA Period", 9)
         paramDialog.addParameter("Plot width", 1)
         paramDialog.addParameterColor("Plot color", "#FFFF00")
-        paramDialog.adjustSize()
+        paramDialog.getView().adjustSize()
 
-        if (paramDialog.exec() == QtWidgets.QDialog.Accepted):
+        if (paramDialog.getView().exec() == QtWidgets.QDialog.Accepted):
             period = paramDialog.getValue("EMA Period")
             width = paramDialog.getValue("Plot width")
             qColor = paramDialog.getColorValue("Plot color")
@@ -719,13 +719,13 @@ class UserInterface:
         if self.RsiPB.isChecked():
             # Show indicator parameter dialog
             paramDialog = indicatorParametersUI.IndicatorParametersUI()
-            paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+            paramDialog.getView().setWindowFlags(QtCore.Qt.CustomizeWindowHint)
             paramDialog.setTitle("RSI Indicator parameters")
             paramDialog.addParameter("RSI Period", 14)
             paramDialog.addParameterColor("Plot color", "#FFFF00")
-            paramDialog.adjustSize()
+            paramDialog.getView().adjustSize()
 
-            if (paramDialog.exec() == QtWidgets.QDialog.Accepted):
+            if (paramDialog.getView().exec() == QtWidgets.QDialog.Accepted):
                 period = paramDialog.getValue("RSI Period")
                 qColor = paramDialog.getColorValue("Plot color")
                 self.fpltWindow[self.current_timeframe].drawRsi(period, qColor)
@@ -745,14 +745,14 @@ class UserInterface:
         if self.StochasticPB.isChecked():
             # Show indicator parameter dialog
             paramDialog = indicatorParametersUI.IndicatorParametersUI()
-            paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+            paramDialog.getView().setWindowFlags(QtCore.Qt.CustomizeWindowHint)
             paramDialog.setTitle("Stochastic Indicator parameters")
             paramDialog.addParameter("Stochastic Period K", 14)
             paramDialog.addParameter("Stochastic Smooth K", 3)
             paramDialog.addParameter("Stochastic Smooth D", 3)
-            paramDialog.adjustSize()
+            paramDialog.getView().adjustSize()
 
-            if (paramDialog.exec() == QtWidgets.QDialog.Accepted):
+            if (paramDialog.getView().exec() == QtWidgets.QDialog.Accepted):
                 period = paramDialog.getValue("Stochastic Period K")
                 smooth_k = paramDialog.getValue("Stochastic Smooth K")
                 smooth_d = paramDialog.getValue("Stochastic Smooth D")
@@ -774,14 +774,14 @@ class UserInterface:
         if self.StochasticRsiPB.isChecked():
             # Show indicator parameter dialog
             paramDialog = indicatorParametersUI.IndicatorParametersUI()
-            paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+            paramDialog.getView().setWindowFlags(QtCore.Qt.CustomizeWindowHint)
             paramDialog.setTitle("Stochastic Indicator parameters")
             paramDialog.addParameter("Stochastic Rsi Period K", 14)
             paramDialog.addParameter("Stochastic Rsi Smooth K", 3)
             paramDialog.addParameter("Stochastic Rsi Smooth D", 3)
-            paramDialog.adjustSize()
+            paramDialog.getView().adjustSize()
 
-            if (paramDialog.exec() == QtWidgets.QDialog.Accepted):
+            if (paramDialog.getView().exec() == QtWidgets.QDialog.Accepted):
                 period = paramDialog.getValue("Stochastic Rsi Period K")
                 smooth_k = paramDialog.getValue("Stochastic Rsi Smooth K")
                 smooth_d = paramDialog.getValue("Stochastic Rsi Smooth D")

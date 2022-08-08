@@ -23,7 +23,8 @@ from __future__ import (absolute_import, division, print_function,
 
 from backtrader import Observer
 
-from app.skinokBacktraderUI import SkinokBacktraderUI as BacktraderUI
+import app.skinokBacktraderUI as BacktraderUI
+# from app.skinokBacktraderUI import BacktraderUI
 
 
 class StockObserver(Observer):
