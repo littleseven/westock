@@ -70,17 +70,17 @@ class UserInterface:
         print("屏幕宽:" + str(self.widget.width()))
         print("屏幕高:" + str(self.widget.height()))
 
-        self.winWidth = int(self.widget.width() * 0.8)
-        self.winHeight = int(self.widget.height() * 0.8)
+        self.winWidth = int(self.widget.width() * 0.9)
+        self.winHeight = int(self.widget.height() * 0.9)
 
         self.chartWidth = self.winWidth * 0.8
-        self.chartHeight = self.winHeight * 0.6
+        self.chartHeight = self.winHeight * 0.8
 
         self.leftPanelWidth = self.winWidth * 0.2
         self.leftPanelHeight = self.chartHeight
 
         self.bottomPanelWidth = self.winWidth
-        self.bottomPanelHeight = self.winHeight * 0.4
+        self.bottomPanelHeight = self.winHeight * 0.2
 
         # All dock area of each time frame
         self.dockAreaTimeframes = {}
@@ -179,7 +179,7 @@ class UserInterface:
 
         self.dock_stackedCharts = QtWidgets.QWidget(self.win)
         self.dock_layout = QtWidgets.QGridLayout()
-        self.dock_stackedCharts.setMinimumSize(self.winWidth * 0.6, self.winHeight * 0.4)
+        self.dock_stackedCharts.setMinimumSize(self.winWidth * 0.6, self.winHeight * 0.6)
 
         self.stackedCharts = QtWidgets.QStackedWidget(self.dock_stackedCharts)
         self.dock_layout.addWidget(self.stackedCharts, 1, 0)
@@ -871,7 +871,7 @@ class UserInterface:
 
         # Parameter box size
         self.strategyTesterUI.parametersLayout.update()
-        self.strategyTesterUI.parametersScrollArea.adjustSize()
+        # self.strategyTesterUI.parametersScrollArea.adjustSize()
 
         pass
 

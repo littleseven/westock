@@ -39,9 +39,10 @@ import userInterface as Ui
 
 from wallet import Wallet
 
+interface = None
+wallet = None
+
 class BacktraderUI:
-    interface = None
-    wallet = None
 
     def __init__(self):
         # init variables

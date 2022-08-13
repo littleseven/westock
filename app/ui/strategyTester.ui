@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>238</width>
+    <width>254</width>
     <height>699</height>
    </rect>
   </property>
@@ -105,21 +105,21 @@
       <item row="6" column="0">
        <widget class="QScrollArea" name="parametersScrollArea">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>0</width>
-          <height>50</height>
+          <width>200</width>
+          <height>200</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>250</height>
+          <height>16777215</height>
          </size>
         </property>
         <property name="widgetResizable">
@@ -131,12 +131,31 @@
            <x>0</x>
            <y>0</y>
            <width>198</width>
-           <height>69</height>
+           <height>200</height>
           </rect>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>198</width>
+           <height>200</height>
+          </size>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
-           <layout class="QFormLayout" name="parametersLayout"/>
+           <layout class="QFormLayout" name="parametersLayout">
+            <property name="fieldGrowthPolicy">
+             <enum>QFormLayout::ExpandingFieldsGrow</enum>
+            </property>
+            <property name="rowWrapPolicy">
+             <enum>QFormLayout::WrapLongRows</enum>
+            </property>
+           </layout>
           </item>
          </layout>
         </widget>
