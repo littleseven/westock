@@ -1,4 +1,4 @@
-import sys
+import sys, os
 
 from indicators import ichimoku
 from indicators import rsi
@@ -12,6 +12,7 @@ import finplot as fplt
 
 import backtrader as bt
 from pyqtgraph import mkColor, mkBrush
+
 
 class FinplotWindow():
 
@@ -36,8 +37,10 @@ class FinplotWindow():
     def createPlotWidgets(self, timeframe):
 
         # fin plot
-        self.ax0, self.ax_rsi, self.ax_stochasticRsi, self.ax_stochastic, self.axPnL = fplt.create_plot_widget(master=self.dockArea, rows=5, init_zoom_periods=200)
-        self.dockArea.axs = [self.ax0, self.ax_rsi, self.ax_stochasticRsi, self.ax_stochastic, self.axPnL] # , self.ax_rsi, self.ax2, self.axPnL
+        self.ax0, self.ax_rsi, self.ax_stochasticRsi, self.ax_stochastic, self.axPnL = fplt.create_plot_widget(
+            master=self.dockArea, rows=5, init_zoom_periods=200)
+        self.dockArea.axs = [self.ax0, self.ax_rsi, self.ax_stochasticRsi, self.ax_stochastic,
+                             self.axPnL]  # , self.ax_rsi, self.ax2, self.axPnL
         self.dockChart.addWidget(self.ax0.ax_widget, 1, 0, 1, 1)
 
         '''
@@ -57,13 +60,13 @@ class FinplotWindow():
     def drawCandles(self):
 
         fplt.candlestick_ochl(self.data['Open Close High Low'.split()], ax=self.ax0)
-        
-        #self.hover_label = fplt.add_legend('', ax=self.ax0)
-        #fplt.set_time_inspector(self.update_legend_text, ax=self.ax0, when='hover', data=data)
-        #fplt.add_crosshair_info(self.update_crosshair_text, ax=self.ax0)
+
+        # self.hover_label = fplt.add_legend('', ax=self.ax0)
+        # fplt.set_time_inspector(self.update_legend_text, ax=self.ax0, when='hover', data=data)
+        # fplt.add_crosshair_info(self.update_crosshair_text, ax=self.ax0)
 
         # Inside plot widget controls
-        #self.createControlPanel(self.ax0.ax_widget)
+        # self.createControlPanel(self.ax0.ax_widget)
         pass
 
     def drawSma(self, period, color, width):
@@ -94,8 +97,8 @@ class FinplotWindow():
     #########
     #  Draw orders on charts (with arrows)
     #########
-    def drawOrders(self, orders = None):
-        
+    def drawOrders(self, orders=None):
+
         # Orders need to be stuied to know if an order is an open or a close order, or both...
         # It depends on the order volume and the currently opened positions volume
         currentPositionSize = 0
@@ -104,8 +107,8 @@ class FinplotWindow():
         if orders != None:
             self.orders = orders
 
-        if hasattr(self,"orders"):
-            
+        if hasattr(self, "orders"):
+
             for order in self.orders:
 
                 ##############
@@ -117,22 +120,22 @@ class FinplotWindow():
 
                     # Tracer les traites allant des ouvertures de positions vers la fermeture de position
                     if currentPositionSize < 0:
-                        
+
                         # Réduction, cloture, ou invertion de la position
-                        if order.size == abs(currentPositionSize): # it's a buy so order.size > 0
-                            
+                        if order.size == abs(currentPositionSize):  # it's a buy so order.size > 0
+
                             # Cloture de la position
                             last_order = open_orders.pop()
-                            posOpen = (bt.num2date(last_order.executed.dt),last_order.executed.price)
+                            posOpen = (bt.num2date(last_order.executed.dt), last_order.executed.price)
                             posClose = (bt.num2date(order.executed.dt), order.executed.price)
 
-                            color =  "#555555"
+                            color = "#555555"
                             if order.executed.pnl > 0:
-                                color =  "#30FF30"
+                                color = "#30FF30"
                             elif order.executed.pnl < 0:
                                 color = "#FF3030"
 
-                            fplt.add_line(posOpen, posClose, color, 2, style="--", ax = self.ax0 )
+                            fplt.add_line(posOpen, posClose, color, 2, style="--", ax=self.ax0)
 
                         elif order.size > abs(currentPositionSize):
                             # Fermeture de la position précédente + ouverture d'une position inverse
@@ -158,30 +161,29 @@ class FinplotWindow():
                 elif order.issell():
                     direction = "sell"
 
-
                     if currentPositionSize < 0:
                         # Augmentation de la postion
-                        
+
                         # on enregistre la position pour pouvoir tracer un trait de ce point vers l'ordre de cloture du trade.
                         open_orders.append(order)
 
                     elif currentPositionSize > 0:
                         # Réduction, cloture, ou invertion de la position
 
-                        if abs(order.size) == abs(currentPositionSize): # it's a buy so order.size > 0
+                        if abs(order.size) == abs(currentPositionSize):  # it's a buy so order.size > 0
                             # Cloture de la position
                             last_order = open_orders.pop()
-                            posOpen = (bt.num2date(last_order.executed.dt),last_order.executed.price)
+                            posOpen = (bt.num2date(last_order.executed.dt), last_order.executed.price)
                             posClose = (bt.num2date(order.executed.dt), order.executed.price)
 
-                            color =  "#555555"
+                            color = "#555555"
                             if order.executed.pnl > 0:
-                                color =  "#30FF30"
+                                color = "#30FF30"
                             elif order.executed.pnl < 0:
                                 color = "#FF3030"
 
-                            fplt.add_line(posOpen, posClose, color, 2, ax=self.ax0, style="--" )
-                            
+                            fplt.add_line(posOpen, posClose, color, 2, ax=self.ax0, style="--")
+
                             pass
 
                         elif order.size > abs(currentPositionSize):
@@ -207,21 +209,21 @@ class FinplotWindow():
                 fplt.add_order(bt.num2date(order.executed.dt), order.executed.price, direction, ax=self.ax0)
 
         pass
-    
+
     #########
     #  Finplot configuration functions : maybe it should be in a different file
-    #########    
+    #########
     def update_legend_text(self, x, y, ax, data):
-        row = data.loc[data.TimeInt==x]
+        row = data.loc[data.TimeInt == x]
 
         # format html with the candle and set legend
-        fmt = '<span style="color:#%s">%%.5f</span>' % ('0f0' if (row.Open<row.Close).all() else 'd00')
+        fmt = '<span style="color:#%s">%%.5f</span>' % ('0f0' if (row.Open < row.Close).all() else 'd00')
         rawtxt = '<span style="font-size:13px">%%s %%s</span> &nbsp; O%s C%s H%s L%s' % (fmt, fmt, fmt, fmt)
         self.hover_label.setText(rawtxt % ("EUR", "M15", row.Open, row.Close, row.High, row.Low))
 
         pass
 
-    def update_crosshair_text(self,x, y, xtext, ytext):
+    def update_crosshair_text(self, x, y, xtext, ytext):
         ytext = '%s (Close%+.2f)' % (ytext, (y - self.data.iloc[x].Close))
         return xtext, ytext
 
@@ -246,13 +248,13 @@ class FinplotWindow():
 
         fplt.volume_bull_color = fplt.volume_bull_body_color = fplt.candle_bull_color + volume_transparency
         fplt.volume_bear_color = fplt.candle_bear_color + volume_transparency
-        fplt.cross_hair_color = fplt.foreground+'8'
+        fplt.cross_hair_color = fplt.foreground + '8'
         fplt.draw_line_color = '#888'
         fplt.draw_done_color = '#555'
 
-        #pg.setConfigOptions(foreground=fplt.foreground, background=fplt.background)
+        # pg.setConfigOptions(foreground=fplt.foreground, background=fplt.background)
         # control panel color
-        #if ctrl_panel is not None:
+        # if ctrl_panel is not None:
         #    p = ctrl_panel.palette()
         #    p.setColor(ctrl_panel.darkmode.foregroundRole(), pg.mkColor(fplt.foreground))
         #    ctrl_panel.darkmode.setPalette(p)
@@ -283,18 +285,18 @@ class FinplotWindow():
                     isvolume = ax in fplt.overlay_axs
                     if not isvolume:
                         item.colors.update(
-                            dict(bull_shadow      = fplt.candle_bull_color,
-                                bull_frame       = fplt.candle_bull_color,
-                                bull_body        = fplt.candle_bull_body_color,
-                                bear_shadow      = fplt.candle_bear_color,
-                                bear_frame       = fplt.candle_bear_color,
-                                bear_body        = fplt.candle_bear_color))
+                            dict(bull_shadow=fplt.candle_bull_color,
+                                 bull_frame=fplt.candle_bull_color,
+                                 bull_body=fplt.candle_bull_body_color,
+                                 bear_shadow=fplt.candle_bear_color,
+                                 bear_frame=fplt.candle_bear_color,
+                                 bear_body=fplt.candle_bear_color))
                     else:
                         item.colors.update(
-                            dict(bull_frame       = fplt.volume_bull_color,
-                                bull_body        = fplt.volume_bull_body_color,
-                                bear_frame       = fplt.volume_bear_color,
-                                bear_body        = fplt.volume_bear_color))
+                            dict(bull_frame=fplt.volume_bull_color,
+                                 bull_body=fplt.volume_bull_body_color,
+                                 bear_frame=fplt.volume_bear_color,
+                                 bear_body=fplt.volume_bear_color))
                     item.repaint()
 
         pass
@@ -306,14 +308,14 @@ class FinplotWindow():
     def resetPlots(self):
 
         # Entirely reset graph
-        if (hasattr(self,"ax0")):
+        if (hasattr(self, "ax0")):
             self.ax0.reset()
-            #self.ax0.reset()
-        if (hasattr(self,"ax1")):
+            # self.ax0.reset()
+        if (hasattr(self, "ax1")):
             self.ax1.reset()
-        if (hasattr(self,"ax2")):
+        if (hasattr(self, "ax2")):
             self.ax2.reset()
-        if (hasattr(self,"axPnL")):
+        if (hasattr(self, "axPnL")):
             self.axPnL.reset()
 
         # Reset overylays too
@@ -343,7 +345,7 @@ class FinplotWindow():
         # Entirely reset graph
         self.resetPlots()
 
-        if (hasattr(self,"data")):
+        if (hasattr(self, "data")):
 
             # Start plotting indicators
             if self.IndIchimokuActivated:
@@ -351,7 +353,9 @@ class FinplotWindow():
                 self.ichimoku_indicator.draw(self.ax0)
 
             if self.IndVolumesActivated:
+                # Fixme: overlay方法调用崩溃
                 fplt.volume_ocv(self.data['Open Close Volume'.split()], ax=self.ax0.overlay())
+                # fplt.volume_ocv(self.data['Open Close Volume'.split()], ax=self.ax0)
 
             # Finally draw candles
             self.drawCandles()
@@ -364,25 +368,24 @@ class FinplotWindow():
 
         pass
 
-    
     def setIndicator(self, indicatorName, activated):
 
         if (indicatorName == "Ichimoku"):
             self.IndIchimokuActivated = activated
-        
+
         if (indicatorName == "Volumes"):
             self.IndVolumesActivated = activated
 
         self.updateChart()
 
         pass
-  
+
     #############
     #  Show finplot Window
     #############
     def show(self):
 
-        #qt_exec create a whole qt context : we dont need it here
+        # qt_exec create a whole qt context : we dont need it here
         fplt.show(qt_exec=False)
 
         pass
@@ -391,9 +394,9 @@ class FinplotWindow():
 
         self.axPnL.reset()
 
-        fplt.plot(pln_data['time'], pln_data['equity'], ax = self.axPnL, legend="equity")
-        fplt.plot(pln_data['time'], pln_data['value'], ax = self.axPnL, legend="value")
-        
+        fplt.plot(pln_data['time'], pln_data['equity'], ax=self.axPnL, legend="equity")
+        fplt.plot(pln_data['time'], pln_data['value'], ax=self.axPnL, legend="value")
+
         self.axPnL.ax_widget.show()
         self.axPnL.show()
 
@@ -408,4 +411,4 @@ class FinplotWindow():
         self.axPnL.hide()
         self.axPnL.ax_widget.hide()
         pass
-    
+

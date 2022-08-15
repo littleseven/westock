@@ -28,15 +28,17 @@ from pyqtgraph.dockarea import DockArea, Dock
 
 import sys, os
 
+from app.gui import controlPanelUI
+
 sys.path.append('../finplot')
 import finplot as fplt
 import backtrader as bt
 
 # Ui made with Qt Designer
-import strategyTesterUI
-import strategyResultsUI
-import indicatorParametersUI
-import loadDataFilesUI
+import strategyTester
+import strategyResults
+import indicatorParameters
+import loadDataFiles
 
 # Import Chart lib
 import finplotWindow
@@ -47,6 +49,8 @@ import qdarkstyle
 
 import pandas as pd
 import functools
+
+os.environ['QT_MAC_WANTS_LAYER'] = '1'
 
 
 class UserInterface:
@@ -91,6 +95,7 @@ class UserInterface:
         self.fpltWindow = {}
         self.timeFramePB = {}
 
+        # self.current_timeframe = "H1"
         # Resize windows properties
         self.win.resize(self.winWidth, self.winHeight)
         self.win.setWindowTitle("WeStock v0.3")
@@ -111,12 +116,36 @@ class UserInterface:
         self.createUIs()
 
         # Enable run button
-        self.strategyTesterUI.runBacktestPB.setEnabled(False)
-
-        self.strategyTester.initialize()
+        # self.strategyTesterUI.runBacktestPB.setEnabled(False)
+        #
+        # self.strategyTesterUI.initialize()
 
         pass
 
+
+    #########
+    #  Create all main window docks
+    #########
+    def createMainDocks(self):
+        self.dockArea = DockArea()
+        self.win.setCentralWidget(self.dockArea)
+
+        # Create Stacked widget
+        self.dock_stackedCharts = Dock("dock_stackedCharts", size=(1000, 500), closable=False, hideTitle=True)
+        self.dockArea.addDock(self.dock_stackedCharts, position='above')
+
+        self.stackedCharts = QtWidgets.QStackedWidget(self.dock_stackedCharts)
+        self.dock_stackedCharts.addWidget(self.stackedCharts, 1, 0)
+
+        # Create Strategy Tester Tab
+        self.dock_strategyTester = Dock("Strategy Tester", size=(200, 500), closable=False, hideTitle=True)
+        self.dockArea.addDock(self.dock_strategyTester, position='left')
+
+        # Create Strategy Tester Tab
+        self.dock_strategyResults = Dock("Strategy Tester", size=(1000, 250), closable=False, hideTitle=True)
+        self.dockArea.addDock(self.dock_strategyResults, position='bottom')
+
+        pass
     #########
     #  Create all chart dock for ONE timeframe
     #########
@@ -171,34 +200,6 @@ class UserInterface:
 
         pass
 
-        #########
-
-    #  Create all main window docks
-    #########
-    def createMainDocks(self):
-
-        self.dock_stackedCharts = QtWidgets.QWidget(self.win)
-        self.dock_layout = QtWidgets.QGridLayout()
-        self.dock_stackedCharts.setMinimumSize(self.winWidth * 0.6, self.winHeight * 0.6)
-
-        self.stackedCharts = QtWidgets.QStackedWidget(self.dock_stackedCharts)
-        self.dock_layout.addWidget(self.stackedCharts, 1, 0)
-        self.dock_stackedCharts.setLayout(self.dock_layout)
-        self.win.setCentralWidget(self.dock_stackedCharts)
-
-        self.dock_strategyTester = QtWidgets.QDockWidget("Strategy Tester",self.win)
-        self.dock_strategyTester.setFeatures(QDockWidget.DockWidgetMovable)
-        # self.dock_strategyTester.setMinimumSize(self.winWidth * 0.2, self.winHeight * 0.6)
-        self.win.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.dock_strategyTester)
-
-        self.dock_strategyResultsUI = QtWidgets.QDockWidget("Strategy Results",self.win)
-        self.dock_strategyResultsUI.setFeatures(QDockWidget.DockWidgetMovable)
-        # self.dock_strategyResultsUI.setMinimumSize(self.winWidth * 0.8, self.winHeight * 0.4)
-        self.win.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.dock_strategyResultsUI)
-
-
-        pass
-
     #########
     #   Create all dock contents
     #########
@@ -224,20 +225,20 @@ class UserInterface:
         self.backtestDataActionGroup = QtWidgets.QActionGroup(self.win)
 
         self.openCSVAction = QtWidgets.QAction(QtGui.QIcon(""), "Open CSV File", self.backtestDataActionGroup)
-        self.openCSVAction.triggered.connect(self.loadDataFileUI.show)
+        self.openCSVAction.triggered.connect(self.loadDataFile.view.show)
 
         # AI
         self.aiActionGroup = QtWidgets.QActionGroup(self.win)
 
         self.loadTFModelAction = QtWidgets.QAction(QtGui.QIcon(""), "Load Tensorflow Model", self.aiActionGroup)
-        self.loadTFModelAction.triggered.connect(self.loadTFModel)
+        self.loadTFModelAction.triggered.connect(self.strategyTesterUI.loadTFModel)
 
         # self.loadTorchModelAction = QtWidgets.QAction(QtGui.QIcon(""),"Load Torch Model", self.aiActionGroup)
         # self.loadTorchModelAction.triggered.connect( self.loadTorchModel )
 
         self.loadStableBaselines3Action = QtWidgets.QAction(QtGui.QIcon(""), "Load Stable Baselines 3 Model",
                                                             self.aiActionGroup)
-        self.loadStableBaselines3Action.triggered.connect(self.loadStableBaselinesModel)
+        self.loadStableBaselines3Action.triggered.connect(self.strategyTesterUI.loadStableBaselinesModel)
 
         # Options
         self.optionsActionGroup = QtWidgets.QActionGroup(self.win)
@@ -269,127 +270,18 @@ class UserInterface:
     #  Strategy results : trades tab
     #########
     def createTradesUI(self):
-
-        # self.tradeTableWidget = QtWidgets.QTableWidget(self.strategyResultsUI.TradesGB)
-        self.tradeTableWidget = QtWidgets.QTableWidget(None)
-
-        self.tradeTableWidget.setColumnCount(7)
-
-        labels = ["Trade id", "Direction", "Date Open", "Date Close", "Price", "Commission", "Profit Net"]
-        self.tradeTableWidget.setHorizontalHeaderLabels(labels)
-        self.tradeTableWidget.verticalHeader().setVisible(False)
-
-        self.tradeTableWidget.horizontalHeader().setStretchLastSection(True)
-        self.tradeTableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-
-        # self.tradeTableWidget.setStyleSheet("alternate-background-color: #AAAAAA;background-color: #CCCCCC;")
-        self.tradeTableWidget.setAlternatingRowColors(True)
-        self.tradeTableWidget.setSortingEnabled(True)
-        self.tradeTableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.tradeTableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-
-        self.strategyResultsUI.ResultsTabWidget.widget(0).layout().addWidget(self.tradeTableWidget)
+        self.strategyResultsUI.createTradesUI()
         pass
 
     def fillTradesUI(self, trades):
-
-        # Delete all previous results by settings row count to 0
-        self.tradeTableWidget.setRowCount(0)
-
-        for key, values in trades:
-
-            self.tradeTableWidget.setRowCount(len(values[0]))
-
-            row = 0
-            for trade in values[0]:
-
-                if not trade.isopen:
-                    # Trade id
-                    item = QtWidgets.QTableWidgetItem(str(trade.ref))
-                    item.setTextAlignment(QtCore.Qt.AlignCenter)
-                    self.tradeTableWidget.setItem(row, 0, item)
-
-                    item = QtWidgets.QTableWidgetItem("Buy" if trade.long else "Sell")
-                    item.setTextAlignment(QtCore.Qt.AlignCenter)
-                    self.tradeTableWidget.setItem(row, 1, item)
-
-                    item = QtWidgets.QTableWidgetItem(str(bt.num2date(trade.dtopen)))
-                    item.setTextAlignment(QtCore.Qt.AlignCenter)
-                    self.tradeTableWidget.setItem(row, 2, item)
-
-                    item = QtWidgets.QTableWidgetItem(str(bt.num2date(trade.dtclose)))
-                    item.setTextAlignment(QtCore.Qt.AlignCenter)
-                    self.tradeTableWidget.setItem(row, 3, item)
-
-                    item = QtWidgets.QTableWidgetItem(str(trade.price))
-                    item.setTextAlignment(QtCore.Qt.AlignCenter)
-                    self.tradeTableWidget.setItem(row, 4, item)
-
-                    item = QtWidgets.QTableWidgetItem(str(trade.commission))
-                    item.setTextAlignment(QtCore.Qt.AlignCenter)
-                    self.tradeTableWidget.setItem(row, 5, item)
-
-                    item = QtWidgets.QTableWidgetItem(str(trade.pnlcomm))
-                    item.setTextAlignment(QtCore.Qt.AlignCenter)
-                    self.tradeTableWidget.setItem(row, 6, item)
-
-                row += 1
-
-        pass
-
-    #########
-    #  Strategy results : Order tab
-    #########
-    def createOrdersUI(self):
-
-        self.orderTableWidget = QtWidgets.QTableWidget(self.dock_orders)
-        self.orderTableWidget.setColumnCount(8)
-
-        labels = ["Order ref", "Direction", "Date Open", "Date Close", "Execution Type", "Size", "Price", "Profit"]
-
-        self.orderTableWidget.setHorizontalHeaderLabels(labels)
-
-        self.orderTableWidget.horizontalHeader().setStretchLastSection(True)
-        self.orderTableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-
-        self.orderTableWidget.setStyleSheet("alternate-background-color: #AAAAAA;background-color: #CCCCCC;")
-        self.orderTableWidget.setAlternatingRowColors(True)
-        self.orderTableWidget.setSortingEnabled(True)
-        self.orderTableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.orderTableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-
-        self.dock_orders.addWidget(self.orderTableWidget)
-
-        pass
-
-    def fillOrdersUI(self, orders):
-
-        self.orderTableWidget.setRowCount(len(orders))
-
-        for i in range(len(orders)):
-            order = orders[i]
-
-            self.orderTableWidget.setItem(i, 0, QtWidgets.QTableWidgetItem(str(order.ref)))
-            self.orderTableWidget.setItem(i, 1, QtWidgets.QTableWidgetItem("Buy" if order.isbuy() else "Sell"))
-
-            self.orderTableWidget.setItem(i, 2, QtWidgets.QTableWidgetItem(str(bt.num2date(order.created.dt))))
-            self.orderTableWidget.setItem(i, 3, QtWidgets.QTableWidgetItem(str(bt.num2date(order.executed.dt))))
-
-            self.orderTableWidget.setItem(i, 4, QtWidgets.QTableWidgetItem(str(order.exectype)))
-
-            self.orderTableWidget.setItem(i, 5, QtWidgets.QTableWidgetItem(str(order.size)))
-            self.orderTableWidget.setItem(i, 6, QtWidgets.QTableWidgetItem(str(order.price)))
-            self.orderTableWidget.setItem(i, 7, QtWidgets.QTableWidgetItem(str(order.executed.pnl)))
-
+        self.strategyResultsUI.fillTradesUI(trades)
         pass
 
     #########
     #  UI parameters for testing stategies
     #########
     def createLoadDataFilesUI(self):
-
-        self.loadDataFileUI = loadDataFilesUI.LoadDataFilesUI(self.controller, self.win)
-        self.loadDataFileUI.hide()
+        self.loadDataFile = loadDataFiles.LoadDataFiles(self.controller, self.win)
         pass
 
     #########
@@ -397,20 +289,15 @@ class UserInterface:
     #########
     def createStrategyTesterUI(self):
 
-        self.strategyTester = strategyTesterUI.StrategyTesterUI(self.controller)
+        self.strategyTester = strategyTester.StrategyTesterController(self.controller)
         self.strategyTesterUI = self.strategyTester.getView()
-        self.dock_strategyTester.setWidget(self.strategyTesterUI)
+        self.dock_strategyTester.addWidget(self.strategyTesterUI)
 
-        self.strategyResults = strategyResultsUI.StrategyResultsUI(self.controller)
+        self.strategyResults = strategyResults.StrategyResults(self.controller)
         self.strategyResultsUI = self.strategyResults.getView()
-        self.dock_strategyResultsUI.setWidget(self.strategyResultsUI)
+        self.dock_strategyResults.addWidget(self.strategyResultsUI)
 
         self.strategyTesterUI.startingCashLE.setText(str(self.controller.cerebro.broker.cash))
-
-        validator = QtGui.QDoubleValidator(-9999999, 9999999, 6, self.strategyTesterUI.startingCashLE)
-        validator.setLocale(QtCore.QLocale("zh"))
-        self.strategyTesterUI.startingCashLE.setValidator(validator)
-
         self.strategyTesterUI.startingCashLE.textChanged.connect(self.controller.cashChanged)
 
         pass
@@ -419,66 +306,18 @@ class UserInterface:
     #  Strategy results : Summary UI
     #########
     def createSummaryUI(self):
-
-        self.summaryTableWidget = QtWidgets.QTableWidget(self.strategyResultsUI.SummaryGB)
-
-        self.summaryTableWidget.setColumnCount(2)
-
-        self.summaryTableWidget.verticalHeader().hide()
-        self.summaryTableWidget.horizontalHeader().hide()
-        self.summaryTableWidget.setShowGrid(False)
-
-        self.strategyResultsUI.SummaryGB.layout().addWidget(self.summaryTableWidget)
-
+        self.strategyResultsUI.createSummaryUI()
         pass
 
     def fillSummaryUI(self, brokerCash, brokerValue, tradeAnalysis):
-
-        # Delete all previous rows
-        self.summaryTableWidget.setRowCount(0)
-
-        self.summaryTableWidget.setRowCount(8)
-
-        self.summaryTableWidget.setItem(0, 0, QtWidgets.QTableWidgetItem("Cash"))
-        self.summaryTableWidget.setItem(0, 1, QtWidgets.QTableWidgetItem(str(brokerCash)))
-
-        self.summaryTableWidget.setItem(1, 0, QtWidgets.QTableWidgetItem("Value"))
-        self.summaryTableWidget.setItem(1, 1, QtWidgets.QTableWidgetItem(str(brokerValue)))
-
-        # if there are some trades
-        if len(tradeAnalysis) > 1:
-            self.summaryTableWidget.setItem(2, 0, QtWidgets.QTableWidgetItem("Profit total"))
-            self.summaryTableWidget.setItem(2, 1, QtWidgets.QTableWidgetItem(str(tradeAnalysis["pnl"]["net"]["total"])))
-
-            self.summaryTableWidget.setItem(3, 0, QtWidgets.QTableWidgetItem("Number of trades"))
-            self.summaryTableWidget.setItem(3, 1, QtWidgets.QTableWidgetItem(str(tradeAnalysis["total"]["total"])))
-
-            self.summaryTableWidget.setItem(4, 0, QtWidgets.QTableWidgetItem("Won"))
-            self.summaryTableWidget.setItem(4, 1, QtWidgets.QTableWidgetItem(str(tradeAnalysis["won"]['total'])))
-
-            self.summaryTableWidget.setItem(5, 0, QtWidgets.QTableWidgetItem("Lost"))
-            self.summaryTableWidget.setItem(5, 1, QtWidgets.QTableWidgetItem(str(tradeAnalysis["lost"]['total'])))
-
-            self.summaryTableWidget.setItem(6, 0, QtWidgets.QTableWidgetItem("Long"))
-            self.summaryTableWidget.setItem(6, 1, QtWidgets.QTableWidgetItem(str(tradeAnalysis["long"]["total"])))
-
-            self.summaryTableWidget.setItem(7, 0, QtWidgets.QTableWidgetItem("Short"))
-            self.summaryTableWidget.setItem(7, 1, QtWidgets.QTableWidgetItem(str(tradeAnalysis["short"]["total"])))
-
-            self.summaryTableWidget.horizontalHeader().setStretchLastSection(True)
-            self.summaryTableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-
-            self.summaryTableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-
+        self.strategyResultsUI.fillSummaryUI(brokerCash, brokerValue, tradeAnalysis)
         pass
 
     #########
     #  Show all
     #########
     def show(self):
-
         # self.fpltWindow[timeframe].show() # prepares plots when they're all setup
-
         self.win.show()
         self.app.exec_()
         pass
@@ -523,117 +362,8 @@ class UserInterface:
     # Control panel overlay on top/above of the finplot window
     #########
     def createControlPanel(self):
-
-        self.controlPanel = QtWidgets.QWidget(self.dock_stackedCharts)
-        self.dock_layout.addWidget(self.controlPanel, 0, 0)
-
-        self.controlPanelLayout = QtWidgets.QHBoxLayout(self.controlPanel)
-
-        '''
-        panel.symbol = QtWidgets.QComboBox(panel)
-        [panel.symbol.addItem(i+'USDT') for i in 'BTC ETH XRP DOGE BNB SOL ADA LTC LINK DOT TRX BCH'.split()]
-        panel.symbol.setCurrentIndex(1)
-        layout.addWidget(panel.symbol, 0, 0)
-        panel.symbol.currentTextChanged.connect(change_asset)
-
-        layout.setColumnMinimumWidth(1, 30)
-
-        panel.interval = QtWidgets.QComboBox(panel)
-        [panel.interval.addItem(i) for i in '1d 4h 1h 30m 15m 5m 1m'.split()]
-        panel.interval.setCurrentIndex(6)
-        layout.addWidget(panel.interval, 0, 2)
-        panel.interval.currentTextChanged.connect(change_asset)
-
-        layout.setColumnMinimumWidth(3, 30)
-        '''
-
-        # Rest
-        self.ResetPB = QtWidgets.QPushButton(self.controlPanel)
-        self.ResetPB.setText("Reset")
-        self.ResetPB.setCheckable(True)
-        self.ResetPB.setMaximumWidth(100)
-        self.ResetPB.toggled.connect(self.resetChart)
-        self.controlPanelLayout.addWidget(self.ResetPB)
-
-        # Spacer
-        spacer = QtWidgets.QSpacerItem(50, 20, QtWidgets.QSizePolicy.Minimum)
-        self.controlPanelLayout.addSpacerItem(spacer)
-
-        # SMA
-        self.SmaPB = QtWidgets.QPushButton(self.controlPanel)
-        self.SmaPB.setText("SMA")
-        self.SmaPB.setCheckable(True)
-        self.SmaPB.setMaximumWidth(100)
-        self.SmaPB.toggled.connect(self.addSma)
-        self.controlPanelLayout.addWidget(self.SmaPB)
-
-        # EMA
-        self.EmaPB = QtWidgets.QPushButton(self.controlPanel)
-        self.EmaPB.setText("EMA")
-        self.EmaPB.setCheckable(True)
-        self.EmaPB.setMaximumWidth(100)
-        self.EmaPB.toggled.connect(self.addEma)
-        self.controlPanelLayout.addWidget(self.EmaPB)
-
-        # Spacer
-        spacer = QtWidgets.QSpacerItem(50, 20, QtWidgets.QSizePolicy.Minimum)
-        self.controlPanelLayout.addSpacerItem(spacer)
-
-        # RSI
-        self.RsiPB = QtWidgets.QPushButton(self.controlPanel)
-        self.RsiPB.setText("RSI")
-        self.RsiPB.setCheckable(True)
-        self.RsiPB.setMaximumWidth(100)
-        self.RsiPB.toggled.connect(self.toogleRsi)
-        self.controlPanelLayout.addWidget(self.RsiPB)
-
-        # Stochastic
-        self.StochasticPB = QtWidgets.QPushButton(self.controlPanel)
-        self.StochasticPB.setText("Stochastic")
-        self.StochasticPB.setCheckable(True)
-        self.StochasticPB.setMaximumWidth(100)
-        self.StochasticPB.toggled.connect(self.toogleStochastic)
-        self.controlPanelLayout.addWidget(self.StochasticPB)
-
-        # Stochastic RSI
-        self.StochasticRsiPB = QtWidgets.QPushButton(self.controlPanel)
-        self.StochasticRsiPB.setText("Stochastic RSI")
-        self.StochasticRsiPB.setCheckable(True)
-        self.StochasticRsiPB.setMaximumWidth(100)
-        self.StochasticRsiPB.toggled.connect(self.toogleStochasticRsi)
-        self.controlPanelLayout.addWidget(self.StochasticRsiPB)
-
-        # Ichimoku
-        self.IchimokuPB = QtWidgets.QPushButton(self.controlPanel)
-        self.IchimokuPB.setText("Ichimoku")
-        self.IchimokuPB.setCheckable(True)
-        self.IchimokuPB.setMaximumWidth(100)
-        self.IchimokuPB.toggled.connect(self.toogleIchimoku)
-        self.controlPanelLayout.addWidget(self.IchimokuPB)
-
-        # Spacer 
-        spacer = QtWidgets.QSpacerItem(50, 20, QtWidgets.QSizePolicy.Minimum)
-        self.controlPanelLayout.addSpacerItem(spacer)
-
-        # Dark mode
-        self.darkmodeCB = QtWidgets.QCheckBox(self.controlPanel)
-        self.darkmodeCB.setText('Dark mode')
-        self.darkmodeCB.toggled.connect(self.dark_mode_toggle)
-        self.darkmodeCB.setChecked(True)
-        self.controlPanelLayout.addWidget(self.darkmodeCB)
-
-        # Volumes
-        self.volumesCB = QtWidgets.QCheckBox(self.controlPanel)
-        self.volumesCB.setText('Volumes')
-        self.volumesCB.toggled.connect(self.volumes_toggle)
-        # init checked after connecting the slot
-        self.volumesCB.setChecked(False)
-        self.controlPanelLayout.addWidget(self.volumesCB)
-
-        # Spacer
-        self.controlPanelLayout.insertSpacerItem(0, QtWidgets.QSpacerItem(0, 0, hPolicy=QtWidgets.QSizePolicy.Expanding,
-                                                                          vPolicy=QtWidgets.QSizePolicy.Preferred))
-
+        self.controlPanel = controlPanelUI.ControlPanelUI(self.dock_stackedCharts, self)
+        self.dock_stackedCharts.addWidget(self.controlPanel, 0, 0)
         return self.controlPanel
 
     #########
@@ -648,7 +378,6 @@ class UserInterface:
     # INDICATORS
     ##########
     def toogleTimeframe(self, timeframe):
-
         if self.timeFramePB[timeframe].isChecked():
             print("Display " + timeframe)
             self.current_timeframe = timeframe
@@ -659,7 +388,6 @@ class UserInterface:
         pass
 
     def togglePnLWidget(self):
-
         # hide all PnL windows & Show the good one
         for tf, fpltWindow in self.fpltWindow.items():
             if tf != self.current_timeframe:
@@ -676,15 +404,15 @@ class UserInterface:
     def addSma(self):
 
         # Show indicator parameter dialog
-        paramDialog = indicatorParametersUI.IndicatorParametersUI()
-        paramDialog.getView().setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+        paramDialog = indicatorParameters.IndicatorParametersController().view
+        paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
         paramDialog.setTitle("SMA Indicator parameters")
         paramDialog.addParameter("SMA Period", 14)
         paramDialog.addParameter("Plot width", 1)
         paramDialog.addParameterColor("Plot color", "#FFFF00")
-        paramDialog.getView().adjustSize()
+        paramDialog.adjustSize()
 
-        if (paramDialog.getView().exec() == QtWidgets.QDialog.Accepted):
+        if paramDialog.exec() == QtWidgets.QDialog.Accepted:
             period = paramDialog.getValue("SMA Period")
             width = paramDialog.getValue("Plot width")
             qColor = paramDialog.getColorValue("Plot color")
@@ -697,15 +425,15 @@ class UserInterface:
 
         # Show indicator parameter dialog
 
-        paramDialog = indicatorParametersUI.IndicatorParametersUI()
-        paramDialog.getView().setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+        paramDialog = indicatorParameters.IndicatorParametersController().view
+        paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
         paramDialog.setTitle("EMA Indicator parameters")
         paramDialog.addParameter("EMA Period", 9)
         paramDialog.addParameter("Plot width", 1)
         paramDialog.addParameterColor("Plot color", "#FFFF00")
-        paramDialog.getView().adjustSize()
+        paramDialog.adjustSize()
 
-        if (paramDialog.getView().exec() == QtWidgets.QDialog.Accepted):
+        if paramDialog.exec() == QtWidgets.QDialog.Accepted:
             period = paramDialog.getValue("EMA Period")
             width = paramDialog.getValue("Plot width")
             qColor = paramDialog.getColorValue("Plot color")
@@ -718,14 +446,14 @@ class UserInterface:
 
         if self.RsiPB.isChecked():
             # Show indicator parameter dialog
-            paramDialog = indicatorParametersUI.IndicatorParametersUI()
-            paramDialog.getView().setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+            paramDialog = indicatorParameters.IndicatorParametersController().view
+            paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
             paramDialog.setTitle("RSI Indicator parameters")
             paramDialog.addParameter("RSI Period", 14)
             paramDialog.addParameterColor("Plot color", "#FFFF00")
-            paramDialog.getView().adjustSize()
+            paramDialog.adjustSize()
 
-            if (paramDialog.getView().exec() == QtWidgets.QDialog.Accepted):
+            if paramDialog.exec() == QtWidgets.QDialog.Accepted:
                 period = paramDialog.getValue("RSI Period")
                 qColor = paramDialog.getColorValue("Plot color")
                 self.fpltWindow[self.current_timeframe].drawRsi(period, qColor)
@@ -744,15 +472,15 @@ class UserInterface:
 
         if self.StochasticPB.isChecked():
             # Show indicator parameter dialog
-            paramDialog = indicatorParametersUI.IndicatorParametersUI()
-            paramDialog.getView().setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+            paramDialog = indicatorParameters.IndicatorParametersController().view
+            paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
             paramDialog.setTitle("Stochastic Indicator parameters")
             paramDialog.addParameter("Stochastic Period K", 14)
             paramDialog.addParameter("Stochastic Smooth K", 3)
             paramDialog.addParameter("Stochastic Smooth D", 3)
-            paramDialog.getView().adjustSize()
+            paramDialog.adjustSize()
 
-            if (paramDialog.getView().exec() == QtWidgets.QDialog.Accepted):
+            if paramDialog.exec() == QtWidgets.QDialog.Accepted:
                 period = paramDialog.getValue("Stochastic Period K")
                 smooth_k = paramDialog.getValue("Stochastic Smooth K")
                 smooth_d = paramDialog.getValue("Stochastic Smooth D")
@@ -773,15 +501,15 @@ class UserInterface:
 
         if self.StochasticRsiPB.isChecked():
             # Show indicator parameter dialog
-            paramDialog = indicatorParametersUI.IndicatorParametersUI()
-            paramDialog.getView().setWindowFlags(QtCore.Qt.CustomizeWindowHint)
+            paramDialog = indicatorParameters.IndicatorParametersController().view
+            paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
             paramDialog.setTitle("Stochastic Indicator parameters")
             paramDialog.addParameter("Stochastic Rsi Period K", 14)
             paramDialog.addParameter("Stochastic Rsi Smooth K", 3)
             paramDialog.addParameter("Stochastic Rsi Smooth D", 3)
-            paramDialog.getView().adjustSize()
+            paramDialog.adjustSize()
 
-            if (paramDialog.getView().exec() == QtWidgets.QDialog.Accepted):
+            if (paramDialog.exec() == QtWidgets.QDialog.Accepted):
                 period = paramDialog.getValue("Stochastic Rsi Period K")
                 smooth_k = paramDialog.getValue("Stochastic Rsi Smooth K")
                 smooth_d = paramDialog.getValue("Stochastic Rsi Smooth D")
@@ -805,41 +533,6 @@ class UserInterface:
 
     def volumes_toggle(self):
         self.fpltWindow[self.current_timeframe].setIndicator("Volumes", self.volumesCB.isChecked())
-        pass
-
-    #########
-    #  Obsolete (Strategy results : transcations tab)
-    #########
-    def createTransactionsUI(self, trades):
-
-        self.transactionTableWidget = QtWidgets.QTableWidget(self.dock_trades)
-        self.transactionTableWidget.setRowCount(len(trades))
-        self.transactionTableWidget.setColumnCount(4)
-
-        labels = ["Date", "Size", "Price", "Value"]
-        self.transactionTableWidget.setHorizontalHeaderLabels(labels)
-
-        row = 0
-        for date, values in trades:
-            # for trade in trades:
-            self.transactionTableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(date.strftime("%Y/%m/%d %H:%M:%S")))
-            self.transactionTableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(str(values[0][0])))
-            self.transactionTableWidget.setItem(row, 2, QtWidgets.QTableWidgetItem(str(values[0][1])))
-            self.transactionTableWidget.setItem(row, 3, QtWidgets.QTableWidgetItem(str(values[0][2])))
-
-            row += 1
-
-        self.transactionTableWidget.horizontalHeader().setStretchLastSection(True)
-        self.transactionTableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-
-        self.transactionTableWidget.setStyleSheet("alternate-background-color: #AAAAAA;background-color: #CCCCCC;")
-        self.transactionTableWidget.setAlternatingRowColors(True)
-        self.transactionTableWidget.setSortingEnabled(True)
-        self.transactionTableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.transactionTableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-
-        self.dock_transactions.addWidget(self.transactionTableWidget)
-
         pass
 
     def fillStrategyParameters(self, strategy):
@@ -872,47 +565,5 @@ class UserInterface:
         # Parameter box size
         self.strategyTesterUI.parametersLayout.update()
         # self.strategyTesterUI.parametersScrollArea.adjustSize()
-
-        pass
-
-    # Load an AI Model from Tensor Flow framework
-    def loadTFModel(self):
-
-        ai_model_dir = QtWidgets.QFileDialog.getExistingDirectory(self.win, "Open Tensorflow Model",
-                                                                  self.current_dir_path)
-
-        # Add the AI Model Strategy
-        self.controller.addStrategy("AiTensorFlowModel")
-
-        self.strategyTesterUI.findChild(QtWidgets.QLineEdit, "model").setText(ai_model_dir)
-        self.controller.strategyParametersSave("model", ai_model_dir)
-
-        pass
-
-    # Load an AI Model from Py Torch framework
-    def loadTorchModel(self):
-
-        ai_model_zip_file = \
-        QtWidgets.QFileDialog.getOpenFileName(self.win, "Open Torch Model", self.current_dir_path, "*.zip")[0]
-
-        # Add the AI Model Strategy
-        self.controller.addStrategy("AiTorchModel")
-
-        self.strategyTesterUI.findChild(QtWidgets.QLineEdit, "model").setText(ai_model_zip_file)
-        self.controller.strategyParametersSave("model", ai_model_zip_file)
-
-        pass
-
-    # Load an AI Model from Stable Baselines framework
-    def loadStableBaselinesModel(self):
-
-        ai_model_zip_file = \
-        QtWidgets.QFileDialog.getOpenFileName(self.win, "Open Torch Model", self.current_dir_path, "*.zip")[0]
-
-        # Add the AI Model Strategy
-        self.controller.addStrategy("AiStableBaselinesModel")
-
-        self.strategyTesterUI.findChild(QtWidgets.QLineEdit, "model").setText(ai_model_zip_file)
-        self.controller.strategyParametersSave("model", ai_model_zip_file)
 
         pass

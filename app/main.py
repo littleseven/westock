@@ -17,7 +17,7 @@
 #
 ###############################################################################
 
-from app.skinokBacktraderUI import BacktraderUI
+from app.backtraderUI import BacktraderUI
 
 skinokTrader = BacktraderUI()
 skinokTrader.displayUI()

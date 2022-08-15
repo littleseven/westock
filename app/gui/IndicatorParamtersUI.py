@@ -1,48 +1,37 @@
-from PySide2 import QtCore, QtWidgets, QtGui
+import typing
 
-import os
+import PySide2
+from PySide2 import QtWidgets, QtGui
+from PySide2.QtWidgets import QDialog
 
-from PySide2.QtCore import QFile
-from PySide2.QtUiTools import QUiLoader
+from app.gui.uic_indicatorParameters import Ui_Dialog
 
 
-class IndicatorParametersUI(QtCore.QObject):
-
+class IndicatorParametersUI(QDialog, Ui_Dialog):
     def __init__(self, parent=None):
-        super(IndicatorParametersUI, self).__init__()
-
-        # self.setParent(parent)
-        self.view = None
-        # It does not finish by a "/"
-        loader = QUiLoader()
-        self.current_dir_path = os.path.dirname(os.path.realpath(__file__))
-        path = os.fspath(self.current_dir_path + "/ui/indicatorParameters.ui")
-        ui_file = QFile(path)
-        ui_file.open(QFile.ReadOnly)
-        self.view = loader.load(ui_file)
-        ui_file.close()
-        pass
+        super().__init__(parent)
+        self.setupUi(self)
 
     def setTitle(self, title):
-        self.title = self.view.findChild(QtWidgets.QLabel, "title")
+        self.title = self.findChild(QtWidgets.QLabel, "title")
         self.title.setText(title)
         pass
 
     def addParameter(self, parameterName, defaultValue):
-        lineEdit = QtWidgets.QLineEdit(parameterName, self.view)
+        lineEdit = QtWidgets.QLineEdit(parameterName, self)
         lineEdit.setObjectName(parameterName)
         lineEdit.setText(str(defaultValue))
-        self.view.parameterLayout.addRow(parameterName, lineEdit)
+        self.parameterLayout.addRow(parameterName, lineEdit)
         pass
 
     def addParameterColor(self, parameterName, defaultValue):
         # Custom color picker
-        colorButton = SelectColorButton(parameterName, self.view)
-        self.view.parameterLayout.addRow(parameterName, colorButton)
+        colorButton = SelectColorButton(parameterName, self)
+        self.parameterLayout.addRow(parameterName, colorButton)
         pass
 
     def getValue(self, parameterName):
-        lineEdit = self.view.findChild(QtWidgets.QLineEdit, parameterName)
+        lineEdit = self.findChild(QtWidgets.QLineEdit, parameterName)
         if lineEdit is not None:
             try:
                 return int(lineEdit.text())
@@ -58,7 +47,7 @@ class IndicatorParametersUI(QtCore.QObject):
             return None
 
     def getColorValue(self, parameterName):
-        colorButton = self.view.findChild(SelectColorButton, parameterName)
+        colorButton = self.findChild(SelectColorButton, parameterName)
         if colorButton is not None:
             try:
                 return colorButton.getColor().name()
@@ -68,7 +57,7 @@ class IndicatorParametersUI(QtCore.QObject):
             return None
 
     def getView(self):
-        return self.view
+        return self
 
 
 class SelectColorButton(QtWidgets.QPushButton):
