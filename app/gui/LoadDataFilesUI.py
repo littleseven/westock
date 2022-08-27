@@ -4,6 +4,7 @@ from PySide2 import QtWidgets, QtCore
 from PySide2.QtWidgets import QWidget
 
 from app.gui.uic_loadDataFiles import Ui_Form
+from app.utils.fileUtil import loadData
 
 
 class LoadDataFileUI(QWidget, Ui_Form):
@@ -12,6 +13,8 @@ class LoadDataFileUI(QWidget, Ui_Form):
         self.setupUi(self)
 
         self.current_dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+        self.dataFileName = self.filePathLE.text()
 
         self.openFilePB = self.findChild(QtWidgets.QToolButton, "openFilePB")
         self.loadFilePB = self.findChild(QtWidgets.QPushButton, "loadFilePB")
@@ -29,7 +32,6 @@ class LoadDataFileUI(QWidget, Ui_Form):
 
         self.hide()
 
-
     def setController(self, controller):
         self.controller = controller
 
@@ -44,7 +46,8 @@ class LoadDataFileUI(QWidget, Ui_Form):
 
         # try loading file by controller
         separator = '\t' if self.tabRB.isChecked() else ',' if self.commaRB.isChecked() else ';'
-        success, errorMessage = self.controller.loadData(self.dataFileName, self.datetimeFormatLE.text(), separator)
+        success, errorMessage = loadData(self.controller.dataframes, self.dataFileName, self.datetimeFormatLE.text(),
+                                         separator)
 
         if success:
 

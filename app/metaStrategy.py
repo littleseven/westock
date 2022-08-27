@@ -18,13 +18,14 @@
 ###############################################################################
 import backtrader as bt
 
+
 class MetaStrategy(bt.Strategy):
 
-    def __init__(self, parameters = None):
+    def __init__(self, parameters=None):
 
         # Set UI modified parameters
         if parameters != None:
             for parameterName, parameterValue in parameters.items():
                 setattr(self.params, parameterName, parameterValue)
-            
+
         pass

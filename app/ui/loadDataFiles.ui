@@ -87,7 +87,7 @@
          <string>tab</string>
         </property>
         <property name="checked">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
        </widget>
       </item>
@@ -96,10 +96,17 @@
         <property name="text">
          <string>comma</string>
         </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
        </widget>
       </item>
       <item row="0" column="1" colspan="3">
-       <widget class="QLineEdit" name="filePathLE"/>
+       <widget class="QLineEdit" name="filePathLE">
+        <property name="text">
+         <string>/Users/guoshuai/PycharmProjects/westock/app/data/Source 1/EURUSD_H1.csv</string>
+        </property>
+       </widget>
       </item>
       <item row="0" column="4">
        <widget class="QToolButton" name="openFilePB">

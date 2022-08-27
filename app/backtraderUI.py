@@ -18,16 +18,14 @@
 ###############################################################################
 import traceback
 
-import pandas
-
 # import sys
 # sys.path.append('D:/perso/trading/anaconda3/backtrader2')
 import backtrader as bt
-from CerebroEnhanced import *
 
 import sys, os
 
-from backtrader.order import BuyOrder, SellOrder
+from app.context import Context
+from app.utils.dateUtil import findTimeFrame
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/observers')
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/strategies')
@@ -43,17 +41,11 @@ from wallet import Wallet
 interface = None
 wallet = None
 
-class BacktraderUI:
+
+class BacktraderUI(Context):
 
     def __init__(self):
-        # init variables
-        self.data = None
-        self.startingcash = 10000.0
-
-        # Init attributes
-        self.strategyParameters = {}
-        self.dataframes = {}
-
+        super(BacktraderUI, self).__init__()
         # Global is here to update the Ui in observers easily, if you find a better way, don't hesistate to tell me (Skinok)
         global interface
         interface = Ui.UserInterface(self)
@@ -69,71 +61,37 @@ class BacktraderUI:
         self.interface.initialize()
 
         # Timeframes
-        self.timeFrameIndex = {"M1": 0, "M5": 10, "M15": 20, "M30": 30, "H1": 40, "H4": 50, "D": 60, "W": 70}
 
         pass
 
-    def resetCerebro(self):
+    def onImportDataSuccess(self, df):
+        timeframe = findTimeFrame(df)
+        self.interface.createChartDock(timeframe)
+        self.interface.drawChart(df, timeframe)
+        pass
 
-        # create a "Cerebro" engine instance
-        self.cerebro = CerebroEnhanced()
+    def onImportDataError(self):
+        pass
 
-        # Then add obersers and analyzers
-        self.cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="ta")
+    def importData(self, fileNames, onSuccess, onError):
+        try:
+            fileNames.sort(key=lambda x: self.timeFrameIndex[findTimeFrame(self.dataframes[x])])
 
-        '''
-        self.cerebro.addanalyzer(bt.analyzers.PyFolio, _name='PyFolio')
-        self.cerebro.addanalyzer(bt.analyzers.SharpeRatio)
-        self.cerebro.addanalyzer(bt.analyzers.Transactions)
-        self.cerebro.addanalyzer(bt.analyzers.Returns)
-        self.cerebro.addanalyzer(bt.analyzers.Position)
+            for fileName in fileNames:
+                df = self.dataframes[fileName]
+                self.data = bt.feeds.PandasData(dataname=df, timeframe=bt.TimeFrame.Minutes)
+                self.cerebro.adddata(self.data)
+                onSuccess(df)
+            self.interface.strategyTesterUI.runBacktestPB.setEnabled(True)
+            return True
 
-        self.cerebro.addobserver(bt.observers.Broker)
-        self.cerebro.addobserver(bt.observers.Trades)
-        self.cerebro.addobserver(bt.observers.BuySell)
-        self.cerebro.addanalyzer(bt.analyzers.Transactions, _name='Transactions')
-
-        '''
-
-        # Add an observer to watch the strat running and update the progress bar values
-        from observers.stockObserver import StockObserver
-        self.cerebro.addobserver(StockObserver)
-
-        # Add data to cerebro
-        if self.data is not None:
-            self.cerebro.adddata(self.data)  # Add the data feed
-
+        except:
+            onError()
+            traceback.print_exc()
+            return False
         pass
 
     # Return True if loading is successfull & the error string if False
-    def loadData(self, dataPath, datetimeFormat, separator):
-
-        # Try importing data file
-        # We should code a widget that ask for options as : separators, date format, and so on...
-        try:
-            fileName = os.path.basename(dataPath)
-
-            # Python contains
-            if not dataPath in self.dataframes:
-                self.dataframes[fileName] = pd.read_csv(dataPath,
-                                                        sep=separator,
-                                                        parse_dates=[0],
-                                                        date_parser=lambda x: pd.to_datetime(x, format=datetimeFormat),
-                                                        skiprows=0,
-                                                        header=0,
-                                                        names=["Time", "Open", "High", "Low", "Close", "Volume"],
-                                                        index_col=0)
-
-        except ValueError as err:
-            return False, "ValueError error:" + str(err)
-        except AttributeError as err:
-            return False, "AttributeError error:" + str(err)
-        except IndexError as err:
-            return False, "IndexError error:" + str(err)
-        except:
-            return False, "Unexpected error:" + str(sys.exc_info()[0])
-
-        return True, ""
 
     def importData(self, fileNames):
 
@@ -141,7 +99,7 @@ class BacktraderUI:
 
             # Sort data by timeframe
             # For cerebro, we need to add lower timeframes first
-            fileNames.sort(key=lambda x: self.timeFrameIndex[self.findTimeFrame(self.dataframes[x])])
+            fileNames.sort(key=lambda x: self.timeFrameIndex[findTimeFrame(self.dataframes[x])])
 
             # Files should be loaded in the good order
             for fileName in fileNames:
@@ -157,7 +115,7 @@ class BacktraderUI:
                 self.cerebro.adddata(self.data)  # Add the data feed
 
                 # Find timeframe
-                timeframe = self.findTimeFrame(df)
+                timeframe = findTimeFrame(df)
 
                 # Create the chart window for the good timeframe (if it does not already exists?)
                 self.interface.createChartDock(timeframe)
@@ -174,38 +132,12 @@ class BacktraderUI:
             traceback.print_exc()
             print("AttributeError error:" + str(e))
         except KeyError as e:
-            # info = traceback.format_exc()
-            # print(info)
             traceback.print_exc()
             print("KeyError error:" + str(e))
         except:
             traceback.print_exc()
             print("Unexpected error:" + str(sys.exc_info()[0]))
             return False
-        pass
-
-    def findTimeFrame(self, df):
-
-        if len(df.index) > 2:
-            dtDiff = df.index[1] - df.index[0]
-
-            if dtDiff.seconds == 60:
-                return "M1"
-            elif dtDiff.seconds == 300:
-                return "M5"
-            elif dtDiff.seconds == 900:
-                return "M15"
-            elif dtDiff.seconds == 1800:
-                return "M30"
-            elif dtDiff.seconds == 3600:
-                return "H1"
-            elif dtDiff.seconds == 14400:
-                return "H4"
-            elif dtDiff.seconds == 86400:
-                return "D"
-            elif dtDiff.seconds == 604800:
-                return "W"
-
         pass
 
     def addStrategy(self, strategyName):

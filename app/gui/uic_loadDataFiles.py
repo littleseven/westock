@@ -72,12 +72,13 @@ class Ui_Form(object):
 
         self.tabRB = QRadioButton(self.groupBox)
         self.tabRB.setObjectName(u"tabRB")
-        self.tabRB.setChecked(True)
+        self.tabRB.setChecked(False)
 
         self.gridLayout.addWidget(self.tabRB, 3, 1, 1, 1)
 
         self.commaRB = QRadioButton(self.groupBox)
         self.commaRB.setObjectName(u"commaRB")
+        self.commaRB.setChecked(True)
 
         self.gridLayout.addWidget(self.commaRB, 3, 2, 1, 1)
 
@@ -138,6 +139,7 @@ class Ui_Form(object):
         self.label_2.setText(QCoreApplication.translate("Form", u"Separator", None))
         self.tabRB.setText(QCoreApplication.translate("Form", u"tab", None))
         self.commaRB.setText(QCoreApplication.translate("Form", u"comma", None))
+        self.filePathLE.setText(QCoreApplication.translate("Form", u"/Users/guoshuai/PycharmProjects/westock/app/data/Source 1/EURUSD_H1.csv", None))
         self.openFilePB.setText(QCoreApplication.translate("Form", u"...", None))
         self.loadFilePB.setText(QCoreApplication.translate("Form", u"Load .CSV file", None))
         self.errorLabel.setText("")

@@ -21,8 +21,6 @@ from PySide2 import QtWidgets
 
 from PySide2 import QtGui
 from PySide2 import QtCore
-from PySide2.QtWidgets import QDockWidget
-from numpy import NaN
 
 from pyqtgraph.dockarea import DockArea, Dock
 
