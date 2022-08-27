@@ -1,0 +1,2 @@
+class Indicator(object):
+    pass

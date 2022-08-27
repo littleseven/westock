@@ -27,6 +27,7 @@ from pyqtgraph.dockarea import DockArea, Dock
 import sys, os
 
 from app.gui import controlPanelUI
+from app.utils.fileUtil import FileUtil
 
 sys.path.append('../finplot')
 import finplot as fplt
@@ -35,7 +36,6 @@ import backtrader as bt
 # Ui made with Qt Designer
 import strategyTester
 import strategyResults
-import indicatorParameters
 import loadDataFiles
 
 # Import Chart lib
@@ -401,127 +401,69 @@ class UserInterface:
 
     # On chart indicators
     def addSma(self):
-
-        # Show indicator parameter dialog
-        paramDialog = indicatorParameters.IndicatorParametersController().view
-        paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
-        paramDialog.setTitle("SMA Indicator parameters")
-        paramDialog.addParameter("SMA Period", 14)
-        paramDialog.addParameter("Plot width", 1)
-        paramDialog.addParameterColor("Plot color", "#FFFF00")
-        paramDialog.adjustSize()
-
-        if paramDialog.exec() == QtWidgets.QDialog.Accepted:
-            period = paramDialog.getValue("SMA Period")
-            width = paramDialog.getValue("Plot width")
-            qColor = paramDialog.getColorValue("Plot color")
-            self.fpltWindow[self.current_timeframe].drawSma(period, qColor, width)
-
+        sma = FileUtil.load_sys_settings("indicator.json")["sma"]
+        period = sma["period"]
+        width = sma["width"]
+        qColor = sma["color"]
+        self.fpltWindow[self.current_timeframe].drawSma(period, qColor, width)
+        self.fpltWindow[self.current_timeframe].setIndicator("Sma", self.controlPanel.SmaPB.isChecked())
         pass
 
     # On chart indicators
     def addEma(self):
-
         # Show indicator parameter dialog
-
-        paramDialog = indicatorParameters.IndicatorParametersController().view
-        paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
-        paramDialog.setTitle("EMA Indicator parameters")
-        paramDialog.addParameter("EMA Period", 9)
-        paramDialog.addParameter("Plot width", 1)
-        paramDialog.addParameterColor("Plot color", "#FFFF00")
-        paramDialog.adjustSize()
-
-        if paramDialog.exec() == QtWidgets.QDialog.Accepted:
-            period = paramDialog.getValue("EMA Period")
-            width = paramDialog.getValue("Plot width")
-            qColor = paramDialog.getColorValue("Plot color")
-            self.fpltWindow[self.current_timeframe].drawEma(period, qColor, width)
-
+        ema = FileUtil.load_sys_settings("indicator.json")["ema"]
+        period = ema["period"]
+        width = ema["width"]
+        qColor = ema["color"]
+        self.fpltWindow[self.current_timeframe].drawEma(period, qColor, width)
+        self.fpltWindow[self.current_timeframe].setIndicator("Ema", self.controlPanel.EmaPB.isChecked())
         pass
 
     # indicators in external windows
     def toogleRsi(self):
-
-        if self.RsiPB.isChecked():
+        if self.controlPanel.RsiPB.isChecked():
             # Show indicator parameter dialog
-            paramDialog = indicatorParameters.IndicatorParametersController().view
-            paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
-            paramDialog.setTitle("RSI Indicator parameters")
-            paramDialog.addParameter("RSI Period", 14)
-            paramDialog.addParameterColor("Plot color", "#FFFF00")
-            paramDialog.adjustSize()
-
-            if paramDialog.exec() == QtWidgets.QDialog.Accepted:
-                period = paramDialog.getValue("RSI Period")
-                qColor = paramDialog.getColorValue("Plot color")
-                self.fpltWindow[self.current_timeframe].drawRsi(period, qColor)
-                self.dock_rsi[self.current_timeframe].show()
-            else:
-                # Cancel
-                self.RsiPB.setChecked(False)
-                self.dock_rsi[self.current_timeframe].hide()
-
+            rsi = FileUtil.load_sys_settings("indicator.json")["rsi"]
+            period = rsi["period"]
+            qColor = rsi["color"]
+            self.fpltWindow[self.current_timeframe].drawRsi(period, qColor)
+            self.dock_rsi[self.current_timeframe].show()
         else:
+            self.controlPanel.RsiPB.setChecked(False)
             self.dock_rsi[self.current_timeframe].hide()
-
         pass
 
     def toogleStochastic(self):
-
-        if self.StochasticPB.isChecked():
+        if self.controlPanel.StochasticPB.isChecked():
             # Show indicator parameter dialog
-            paramDialog = indicatorParameters.IndicatorParametersController().view
-            paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
-            paramDialog.setTitle("Stochastic Indicator parameters")
-            paramDialog.addParameter("Stochastic Period K", 14)
-            paramDialog.addParameter("Stochastic Smooth K", 3)
-            paramDialog.addParameter("Stochastic Smooth D", 3)
-            paramDialog.adjustSize()
-
-            if paramDialog.exec() == QtWidgets.QDialog.Accepted:
-                period = paramDialog.getValue("Stochastic Period K")
-                smooth_k = paramDialog.getValue("Stochastic Smooth K")
-                smooth_d = paramDialog.getValue("Stochastic Smooth D")
-
-                self.fpltWindow[self.current_timeframe].drawStochastic(period, smooth_k, smooth_d)
-                self.dock_stochastic[self.current_timeframe].show()
-            else:
-                # Cancel
-                self.RsiPB.setChecked(False)
-                self.dock_stochastic[self.current_timeframe].hide()
-
+            stochastic = FileUtil.load_sys_settings("indicator.json")["stochastic"]
+            period = stochastic["period_k"]
+            smooth_k = stochastic["smooth_k"]
+            smooth_d = stochastic["smooth_d"]
+            self.fpltWindow[self.current_timeframe].drawStochastic(period, smooth_k, smooth_d)
+            self.dock_stochastic[self.current_timeframe].show()
         else:
+            self.controlPanel.StochasticPB.setChecked(False)
             self.dock_stochastic[self.current_timeframe].hide()
 
         pass
 
     def toogleStochasticRsi(self):
-
-        if self.StochasticRsiPB.isChecked():
+        if self.controlPanel.StochasticRsiPB.isChecked():
             # Show indicator parameter dialog
-            paramDialog = indicatorParameters.IndicatorParametersController().view
-            paramDialog.setWindowFlags(QtCore.Qt.CustomizeWindowHint)
-            paramDialog.setTitle("Stochastic Indicator parameters")
-            paramDialog.addParameter("Stochastic Rsi Period K", 14)
-            paramDialog.addParameter("Stochastic Rsi Smooth K", 3)
-            paramDialog.addParameter("Stochastic Rsi Smooth D", 3)
-            paramDialog.adjustSize()
+            stochastic = FileUtil.load_sys_settings("indicator.json")["stochasticRsi"]
+            period = stochastic["period_k"]
+            smooth_k = stochastic["smooth_k"]
+            smooth_d = stochastic["smooth_d"]
 
-            if (paramDialog.exec() == QtWidgets.QDialog.Accepted):
-                period = paramDialog.getValue("Stochastic Rsi Period K")
-                smooth_k = paramDialog.getValue("Stochastic Rsi Smooth K")
-                smooth_d = paramDialog.getValue("Stochastic Rsi Smooth D")
-
-                self.fpltWindow[self.current_timeframe].drawStochasticRsi(period, smooth_k, smooth_d)
-                self.dock_stochasticRsi[self.current_timeframe].show()
-            else:
-                # Cancel
-                self.RsiPB.setChecked(False)
-                self.dock_stochasticRsi[self.current_timeframe].hide()
+            self.fpltWindow[self.current_timeframe].drawStochasticRsi(period, smooth_k, smooth_d)
+            self.dock_stochasticRsi[self.current_timeframe].show()
 
         else:
+            self.controlPanel.StochasticRsiPB.setChecked(False)
             self.dock_stochasticRsi[self.current_timeframe].hide()
+
 
         pass
 

@@ -4,7 +4,7 @@ from PySide2 import QtWidgets, QtCore
 from PySide2.QtWidgets import QWidget
 
 from app.gui.uic_loadDataFiles import Ui_Form
-from app.utils.fileUtil import loadData
+from app.utils.fileUtil import FileUtil
 
 
 class LoadDataFileUI(QWidget, Ui_Form):
@@ -46,7 +46,7 @@ class LoadDataFileUI(QWidget, Ui_Form):
 
         # try loading file by controller
         separator = '\t' if self.tabRB.isChecked() else ',' if self.commaRB.isChecked() else ';'
-        success, errorMessage = loadData(self.controller.dataframes, self.dataFileName, self.datetimeFormatLE.text(),
+        success, errorMessage = FileUtil.loadData(self.controller.dataframes, self.dataFileName, self.datetimeFormatLE.text(),
                                          separator)
 
         if success:

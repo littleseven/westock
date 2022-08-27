@@ -1,0 +1,27 @@
+{
+    "sma": {
+        "period": 15,
+        "width": 1,
+        "color": "#ffff00"
+    },
+    "ema": {
+        "period": 9,
+        "width": 1,
+        "color": "#FFFF00"
+    },
+    "rsi": {
+        "period": 14,
+        "width": 1,
+        "color": "#FFFF00"
+    },
+    "stochastic": {
+        "period_k": 14,
+        "smooth_k": 3,
+        "smooth_d": 3
+    },
+    "stochasticRsi": {
+        "period_k": 14,
+        "smooth_k": 3,
+        "smooth_d": 3
+    }
+}
