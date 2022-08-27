@@ -192,10 +192,10 @@ class UserInterface:
         self.timeFramePB[timeframe].toggled.connect(lambda: self.toogleTimeframe(timeframe))
         self.timeFramePB[timeframe].toggle()
 
-        self.controlPanelLayout.insertWidget(0, self.timeFramePB[timeframe])
+        self.controlPanel.controlPanelLayout.insertWidget(0, self.timeFramePB[timeframe])
 
         # init checked after connecting the slot
-        if self.darkmodeCB.isChecked():
+        if self.controlPanel.darkmodeCB.isChecked():
             self.dark_mode_toggle()
 
         pass
@@ -364,6 +364,7 @@ class UserInterface:
     def createControlPanel(self):
         self.controlPanel = controlPanelUI.ControlPanelUI(self.dock_stackedCharts, self)
         self.dock_stackedCharts.addWidget(self.controlPanel, 0, 0)
+        # self.controlPanelLayout = self.controlPanel.controlPanelLayout
         return self.controlPanel
 
     #########
@@ -371,7 +372,7 @@ class UserInterface:
     #########
     def dark_mode_toggle(self):
         for key, window in self.fpltWindow.items():
-            window.activateDarkMode(self.darkmodeCB.isChecked())
+            window.activateDarkMode(self.controlPanel.darkmodeCB.isChecked())
         pass
 
     ##########
@@ -528,11 +529,11 @@ class UserInterface:
 
     # On chart indicators
     def toogleIchimoku(self):
-        self.fpltWindow[self.current_timeframe].setIndicator("Ichimoku", self.IchimokuPB.isChecked())
+        self.fpltWindow[self.current_timeframe].setIndicator("Ichimoku", self.controlPanel.IchimokuPB.isChecked())
         pass
 
     def volumes_toggle(self):
-        self.fpltWindow[self.current_timeframe].setIndicator("Volumes", self.volumesCB.isChecked())
+        self.fpltWindow[self.current_timeframe].setIndicator("Volumes", self.controlPanel.volumesCB.isChecked())
         pass
 
     def fillStrategyParameters(self, strategy):

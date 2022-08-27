@@ -52,7 +52,8 @@ class StrategyTesterUI(QWidget, Ui_Form):
 
     def strategyNameActivated(self):
         stratBaseName = self.strategyNameCB.currentText()
-        self.controller.addStrategy(stratBaseName)
+        if hasattr(self, 'controller'):
+            self.controller.addStrategy(stratBaseName)
 
     # Load an AI Model from Tensor Flow framework
     def loadTFModel(self):

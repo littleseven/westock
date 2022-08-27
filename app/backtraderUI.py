@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ###############################################################################
+import traceback
 
 import pandas
 
@@ -170,10 +171,15 @@ class BacktraderUI:
             return True
 
         except AttributeError as e:
+            traceback.print_exc()
             print("AttributeError error:" + str(e))
         except KeyError as e:
+            # info = traceback.format_exc()
+            # print(info)
+            traceback.print_exc()
             print("KeyError error:" + str(e))
         except:
+            traceback.print_exc()
             print("Unexpected error:" + str(sys.exc_info()[0]))
             return False
         pass
