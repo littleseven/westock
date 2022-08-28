@@ -4,7 +4,7 @@ import sys
 sys.path.append('../finplot')
 import finplot as fplt
 
-from common import StochRSI
+from app.common import StochRSI
 
 class StochasticRsi():
 

@@ -140,7 +140,7 @@ class UserInterface:
         self.dockArea.addDock(self.dock_strategyTester, position='left')
 
         # Create Strategy Tester Tab
-        self.dock_strategyResults = Dock("Strategy Tester", size=(1000, 250), closable=False, hideTitle=True)
+        self.dock_strategyResults = Dock("Strategy Result", size=(1000, 250), closable=False, hideTitle=True)
         self.dockArea.addDock(self.dock_strategyResults, position='bottom')
 
         pass
@@ -362,7 +362,6 @@ class UserInterface:
     def createControlPanel(self):
         self.controlPanel = controlPanelUI.ControlPanelUI(self.dock_stackedCharts, self)
         self.dock_stackedCharts.addWidget(self.controlPanel, 0, 0)
-        # self.controlPanelLayout = self.controlPanel.controlPanelLayout
         return self.controlPanel
 
     #########
@@ -477,12 +476,6 @@ class UserInterface:
         pass
 
     def fillStrategyParameters(self, strategy):
-
-        # Rest widget rows
-        self.strategyTesterUI.parametersLayout = self.strategyTesterUI.findChild(QtWidgets.QFormLayout,
-                                                                                 "parametersLayout")
-        self.strategyTesterUI.parametersScrollArea = self.strategyTesterUI.findChild(QtWidgets.QScrollArea,
-                                                                                     "parametersScrollArea")
         for indexRow in range(self.strategyTesterUI.parametersLayout.rowCount()):
             self.strategyTesterUI.parametersLayout.removeRow(0)
 

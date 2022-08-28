@@ -4,8 +4,6 @@ import sys
 sys.path.append('../finplot')
 import finplot as fplt
 
-from common import calc_rsi
-
 class Ema():
 
     def __init__(self, dataFrames, ema_periods=9):

@@ -4,7 +4,7 @@ import sys
 sys.path.append('../finplot')
 import finplot as fplt
 
-from common import calc_stochastic_oscillator
+from app.common import calc_stochastic_oscillator
 
 class Stochastic():
 

@@ -24,8 +24,6 @@ from __future__ import (absolute_import, division, print_function,
 from backtrader import Observer
 
 import app.backtraderUI as BacktraderUI
-# from app.skinokBacktraderUI import BacktraderUI
-
 
 class StockObserver(Observer):
     lines = ('wallet_value', 'wallet_equity', 'wallet_cash')

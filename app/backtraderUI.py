@@ -1,25 +1,5 @@
-###############################################################################
-#
-# Copyright (C) 2021 - Skinok
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-###############################################################################
 import traceback
 
-# import sys
-# sys.path.append('D:/perso/trading/anaconda3/backtrader2')
 import backtrader as bt
 
 import sys, os
@@ -46,7 +26,6 @@ class BacktraderUI(Context):
 
     def __init__(self):
         super(BacktraderUI, self).__init__()
-        # Global is here to update the Ui in observers easily, if you find a better way, don't hesistate to tell me (Skinok)
         global interface
         interface = Ui.UserInterface(self)
         self.interface = interface
@@ -56,13 +35,7 @@ class BacktraderUI(Context):
         self.wallet = wallet
 
         self.resetCerebro()
-
-        # Once everything is created, initialize data
         self.interface.initialize()
-
-        # Timeframes
-
-        pass
 
     def onImportDataSuccess(self, df):
         timeframe = findTimeFrame(df)
@@ -70,10 +43,7 @@ class BacktraderUI(Context):
         self.interface.drawChart(df, timeframe)
         pass
 
-    def onImportDataError(self):
-        pass
-
-    def importData(self, fileNames, onSuccess, onError):
+    def importData(self, fileNames, onSuccess):
         try:
             fileNames.sort(key=lambda x: self.timeFrameIndex[findTimeFrame(self.dataframes[x])])
 
@@ -84,14 +54,11 @@ class BacktraderUI(Context):
                 onSuccess(df)
             self.interface.strategyTesterUI.runBacktestPB.setEnabled(True)
             return True
-
         except:
-            onError()
             traceback.print_exc()
             return False
         pass
 
-    # Return True if loading is successfull & the error string if False
 
     def importData(self, fileNames):
 
@@ -141,17 +108,7 @@ class BacktraderUI(Context):
         pass
 
     def addStrategy(self, strategyName):
-
-        # For now, only one strategy is allowed at a time
-        self.cerebro.clearStrategies()
-
-        # Reset strategy parameters
-        self.strategyParameters = {}
-
-        mod = __import__(strategyName, fromlist=[
-            strategyName])  # first strategyName is the file name, and second (fromlist) is the class name
-        self.strategyClass = getattr(mod, strategyName)  # class name in the file
-
+        super().addStrategy(strategyName)
         # Add strategy parameters
         self.interface.fillStrategyParameters(self.strategyClass)
 
@@ -177,61 +134,34 @@ class BacktraderUI(Context):
         self.strategyParameters[parameterName] = parameterValue
         pass
 
-    def run(self):
-
-        # Reset cerebro internal variables
-        self.resetCerebro()
-
+    def onPreExecute(self):
         # UI label
         self.interface.strategyTesterUI.runLabel.setText("Running strategy...")
-
         self.interface.resetChart()
-
-        # Add strategy here to get modified parameters
-        params = self.strategyParameters
-        self.strategyIndex = self.cerebro.addstrategy(self.strategyClass, params)
-
-        # Wallet Management : reset between each run
-        self.cerebro.broker.setcash(self.startingcash)
         self.wallet.reset(self.startingcash)
+        pass
 
-        # Compute strategy results
-        results = self.cerebro.run()  # run it all
-        self.strat_results = results[0]  # results of the first strategy
-
+    def onPostExecute(self, results):
         # Display results
+        self.strat_results = results[0]  # results of the first strategy
         self.displayStrategyResults()
 
         # UI label
         self.interface.strategyTesterUI.runLabel.setText("Strategy backtest completed.")
-
         pass
 
     def displayStrategyResults(self):
-        # Stats on trades
-        # portfolio_stats = self.strat_results.analyzers.getbyname('PyFolio')
-        # self.returns, self.positions, self.transactions, self.gross_lev = portfolio_stats.get_pf_items()
-        # self.portfolio_transactions = self.strat_results.analyzers.Transactions.get_analysis().items()
-        # self.returns.index = self.returns.index.tz_convert(None)
-
-        # self.interface.createTransactionsUI(self.portfolio_transactions)
         self.interface.fillSummaryUI(self.strat_results.stats.broker.cash[0], self.strat_results.stats.broker.value[0],
                                      self.strat_results.analyzers.ta.get_analysis())
         self.interface.fillTradesUI(self.strat_results._trades.items())
-
-        # self.interface.drawTrades(self.strat_results._trades.items())
-        # Orders filters
         self.myOrders = []
         for order in self.strat_results._orders:
-
             if order.status in [order.Completed]:
                 self.myOrders.append(order)
-
         self.interface.setOrders(self.myOrders)
 
         # Profit and Loss
         pnl_data = {}
-
         pnl_data['value'] = self.wallet.value_list
         pnl_data['equity'] = self.wallet.equity_list
         pnl_data['cash'] = self.wallet.cash_list
@@ -242,7 +172,6 @@ class BacktraderUI(Context):
         # draw charts
         df = pd.DataFrame(pnl_data)
         self.interface.displayPnL(df)
-
         pass
 
     def displayUI(self):
@@ -250,9 +179,7 @@ class BacktraderUI(Context):
         pass
 
     def cashChanged(self, cashString):
-
         if len(cashString) > 0:
             self.startingcash = float(cashString)
             self.cerebro.broker.setcash(self.startingcash)
-
         pass
