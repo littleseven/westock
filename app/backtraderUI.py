@@ -5,6 +5,7 @@ import backtrader as bt
 import sys, os
 
 from app.context import Context
+from app.data import dataUtil
 from app.utils.dateUtil import findTimeFrame
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '/observers')
@@ -41,6 +42,7 @@ class BacktraderUI(Context):
         timeframe = findTimeFrame(df)
         self.interface.createChartDock(timeframe)
         self.interface.drawChart(df, timeframe)
+        self.interface.strategyTesterUI.runBacktestPB.setEnabled(True)
         pass
 
     def importData(self, fileNames, onSuccess):
@@ -182,4 +184,15 @@ class BacktraderUI(Context):
         if len(cashString) > 0:
             self.startingcash = float(cashString)
             self.cerebro.broker.setcash(self.startingcash)
+        pass
+
+
+    def loadData(self, kwargs):
+        code = kwargs["code"]
+        dataframe = dataUtil.get_stock_data(kwargs)
+        self.dataframes[code] = dataframe
+        df = self.dataframes[code]
+        self.data = bt.feeds.PandasData(dataname=df, timeframe=bt.TimeFrame.Minutes)
+        self.cerebro.adddata(self.data)
+        self.onImportDataSuccess(df)
         pass

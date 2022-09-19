@@ -1,22 +1,3 @@
-###############################################################################
-#
-# Copyright (C) 2021 - Skinok
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-###############################################################################
-
 from PySide2 import QtWidgets
 
 from PySide2 import QtGui
@@ -26,7 +7,7 @@ from pyqtgraph.dockarea import DockArea, Dock
 
 import sys, os
 
-from app.gui import controlPanelUI
+from app.gui import controlPanelUI, StockPoolUI
 from app.utils.fileUtil import FileUtil
 
 sys.path.append('../finplot')
@@ -111,6 +92,8 @@ class UserInterface:
         # Create all buttons above the chart window
         self.createControlPanel()
 
+        self.createTimeFramePanel()
+
         self.createUIs()
 
         # Enable run button
@@ -132,16 +115,28 @@ class UserInterface:
         self.dock_stackedCharts = Dock("dock_stackedCharts", size=(1000, 500), closable=False, hideTitle=True)
         self.dockArea.addDock(self.dock_stackedCharts, position='above')
 
+        # self.dock_timeframe = Dock("dock_timeframe", size=(1000, 200), closable=False, hideTitle=True)
+        # self.dockArea.addDock(self.dock_timeframe, position='above')
+
         self.stackedCharts = QtWidgets.QStackedWidget(self.dock_stackedCharts)
-        self.dock_stackedCharts.addWidget(self.stackedCharts, 1, 0)
+        self.dock_stackedCharts.addWidget(self.stackedCharts, 2, 0)
+
 
         # Create Strategy Tester Tab
         self.dock_strategyTester = Dock("Strategy Tester", size=(200, 500), closable=False, hideTitle=True)
         self.dockArea.addDock(self.dock_strategyTester, position='left')
 
         # Create Strategy Tester Tab
+        self.dock_stockInfo = Dock("Stock Info", size=(300, 500), closable=False, hideTitle=True)
+        self.dockArea.addDock(self.dock_stockInfo, position='left')
+
+        # Create Strategy Tester Tab
         self.dock_strategyResults = Dock("Strategy Result", size=(1000, 250), closable=False, hideTitle=True)
         self.dockArea.addDock(self.dock_strategyResults, position='bottom')
+
+        # Create left menu
+        self.dock_left_menu = Dock("Left Menu", size=(200, self.winHeight), closable=False, hideTitle=True)
+        self.dockArea.addDock(self.dock_left_menu, position='left')
 
         pass
     #########
@@ -204,6 +199,7 @@ class UserInterface:
     def createUIs(self):
 
         self.createStrategyTesterUI()
+        self.createStockInfoUI()
         self.createTradesUI()
         self.createLoadDataFilesUI()
         # self.createOrdersUI()
@@ -262,6 +258,14 @@ class UserInterface:
         self.optionsMenu = self.menubar.addMenu("Options")
         self.optionsMenu.addActions(self.optionsActionGroup.actions())
 
+        pass
+
+    def createStockInfoUI(self):
+        self.stockInfoUI = StockPoolUI.StockPoolUI()
+        self.stockInfoUI.setController(self.controller)
+        self.dock_stockInfo.addWidget(self.stockInfoUI)
+        self.stockInfoUI.createStockPoolUI()
+        self.stockInfoUI.fillStockPoolUI()
         pass
 
     #########
@@ -360,6 +364,11 @@ class UserInterface:
     # Control panel overlay on top/above of the finplot window
     #########
     def createControlPanel(self):
+        self.controlPanel = controlPanelUI.ControlPanelUI(self.dock_stackedCharts, self)
+        self.dock_stackedCharts.addWidget(self.controlPanel, 1, 0)
+        return self.controlPanel
+
+    def createTimeFramePanel(self):
         self.controlPanel = controlPanelUI.ControlPanelUI(self.dock_stackedCharts, self)
         self.dock_stackedCharts.addWidget(self.controlPanel, 0, 0)
         return self.controlPanel
